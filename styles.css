@@ -1,0 +1,155 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Inter", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.6;
+  color: #1b1f2a;
+  background: #f7f8fb;
+}
+
+.container {
+  width: min(1100px, 92%);
+  margin: 0 auto;
+}
+
+.hero {
+  background: linear-gradient(120deg, #152347, #2b3a67);
+  color: #f8f9ff;
+  padding: 60px 0 48px;
+}
+
+.eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.8rem;
+  margin: 0 0 10px;
+  color: #cdd6ff;
+}
+
+.hero h1 {
+  margin: 0 0 12px;
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 700;
+}
+
+.subtitle {
+  margin: 0 0 18px;
+  max-width: 850px;
+  color: #dfe5ff;
+}
+
+.hero-meta {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+  font-size: 0.95rem;
+  color: #c6d0ff;
+}
+
+main {
+  padding: 32px 0 48px;
+}
+
+.card {
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 10px 30px rgba(18, 24, 40, 0.08);
+}
+
+.card h2 {
+  margin-top: 0;
+  font-size: 1.5rem;
+}
+
+.card h3 {
+  margin: 12px 0 8px;
+  font-size: 1.1rem;
+}
+
+.grid-two {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 20px;
+}
+
+.highlight {
+  border: 1px solid #dce3ff;
+  background: #f0f4ff;
+}
+
+.note {
+  border-left: 6px solid #3855c6;
+}
+
+.code-block {
+  background: #1b2555;
+  color: #f2f5ff;
+  padding: 12px 16px;
+  border-radius: 10px;
+  font-size: 1.1rem;
+  width: fit-content;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+table th,
+table td {
+  text-align: left;
+  padding: 10px 8px;
+  border-bottom: 1px solid #e5e8f3;
+}
+
+table th {
+  color: #2b3a67;
+  font-weight: 600;
+}
+
+ul {
+  padding-left: 18px;
+  margin: 6px 0 0;
+}
+
+.diagram {
+  background: #f5f7ff;
+  border: 1px solid #e1e6ff;
+  border-radius: 12px;
+  padding: 12px;
+  overflow-x: auto;
+  margin-bottom: 18px;
+}
+
+.diagram svg {
+  width: 100%;
+  height: auto;
+}
+
+svg rect {
+  fill: #ffffff;
+  stroke: #1c2b4a;
+  stroke-width: 1.5;
+}
+
+svg text {
+  font-family: "Inter", "Segoe UI", Arial, sans-serif;
+  font-size: 14px;
+  fill: #1c2b4a;
+  text-anchor: middle;
+  dominant-baseline: middle;
+}
+
+.footer {
+  background: #10162f;
+  color: #b8c4ff;
+  padding: 24px 0;
+  text-align: center;
+  font-size: 0.95rem;
+}
