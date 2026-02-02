@@ -202,10 +202,10 @@ ul {
 }
 
 .diagram {
-  background: #fafbff;
-  border: 1px solid #e7e9f8;
-  border-radius: 12px;
-  padding: 12px;
+  background: #f8f9ff;
+  border: 1px solid #e2e6ff;
+  border-radius: 14px;
+  padding: 16px;
   overflow-x: auto;
   margin-bottom: 12px;
 }
@@ -218,12 +218,13 @@ ul {
 svg rect {
   fill: #ffffff;
   stroke: #1c2b4a;
-  stroke-width: 1.5;
+  stroke-width: 1.6;
 }
 
 svg text {
   font-family: "Inter", "Segoe UI", Arial, sans-serif;
-  font-size: 14px;
+  font-size: 13.5px;
+  font-weight: 500;
   fill: #1c2b4a;
   text-anchor: middle;
   dominant-baseline: middle;
