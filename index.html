@@ -218,6 +218,24 @@
           gather what you need, compute locally, then reduce or scatter back to
           the local shape.
         </p>
+        <div class="reading-list">
+          <div>
+            <h3>Assumed mesh</h3>
+            <ul>
+              <li>dp shards batch (B)</li>
+              <li>cp and sp shard sequence (S)</li>
+              <li>tp shards weights (heads or FFN dim)</li>
+              <li>vp shards vocabulary (V)</li>
+            </ul>
+          </div>
+          <div>
+            <h3>Local entry/exit</h3>
+            <ul>
+              <li>[B/dp, S/(cp*sp), D]</li>
+              <li>Full hidden dim D stays local</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="card" id="embeddings">
@@ -268,6 +286,26 @@
           Diagram 1: Vocab-parallel embeddings. The local lookup is combined
           and immediately sharded into the sequence-parallel layout.
         </p>
+        <div class="grid-two">
+          <div>
+            <h3>Step-by-step</h3>
+            <ul>
+              <li>Start from local token IDs (your shard of the batch).</li>
+              <li>Mask tokens not in the local vocab shard.</li>
+              <li>Lookup embeddings in the local vocab slice.</li>
+              <li>ReduceScatter across vp to sum partial embeddings.</li>
+              <li>Scatter across sp to form the sequence shard.</li>
+            </ul>
+          </div>
+          <div>
+            <h3>Shapes</h3>
+            <ul>
+              <li>Input: [B/dp, S/cp]</li>
+              <li>Local lookup: [B/dp, S/cp, D] (unreduced)</li>
+              <li>Output: [B/dp, S/(cp*sp), D]</li>
+            </ul>
+          </div>
+        </div>
         <div class="grid-two">
           <div>
             <h3>Compute</h3>
@@ -351,6 +389,28 @@
         </p>
         <div class="grid-two">
           <div>
+            <h3>Step-by-step</h3>
+            <ul>
+              <li>LayerNorm on local shard.</li>
+              <li>AllGather over sp to rebuild sequence for attention.</li>
+              <li>Project Q, K, V (tp shards heads or head dim).</li>
+              <li>CP ring exchanges K/V for full context.</li>
+              <li>SDPA computes attention output.</li>
+              <li>Output projection (row-parallel) produces partial sums.</li>
+              <li>ReduceScatter sums tp and scatters over sp.</li>
+            </ul>
+          </div>
+          <div>
+            <h3>Shapes</h3>
+            <ul>
+              <li>Input: [B/dp, S/(cp*sp), D]</li>
+              <li>After AllGather(sp): [B/dp, S/cp, D]</li>
+              <li>Output: [B/dp, S/(cp*sp), D]</li>
+            </ul>
+          </div>
+        </div>
+        <div class="grid-two">
+          <div>
             <h3>Compute</h3>
             <ul>
               <li>Local sequence shards are expanded with AllGather(sp).</li>
@@ -415,6 +475,27 @@
         </p>
         <div class="grid-two">
           <div>
+            <h3>Step-by-step</h3>
+            <ul>
+              <li>LayerNorm on local shard.</li>
+              <li>AllGather(sp) to rebuild sequence.</li>
+              <li>Up projection (tp column parallel) expands to F.</li>
+              <li>Activation (GELU or SwiGLU variant).</li>
+              <li>Down projection (tp row parallel) back to D.</li>
+              <li>ReduceScatter sums tp and scatters over sp.</li>
+            </ul>
+          </div>
+          <div>
+            <h3>Shapes</h3>
+            <ul>
+              <li>Input: [B/dp, S/(cp*sp), D]</li>
+              <li>Expanded: [B/dp, S/cp, F/tp]</li>
+              <li>Output: [B/dp, S/(cp*sp), D]</li>
+            </ul>
+          </div>
+        </div>
+        <div class="grid-two">
+          <div>
             <h3>Compute</h3>
             <ul>
               <li>The sequence is gathered, then expanded in the up projection.</li>
@@ -475,6 +556,26 @@
         </p>
         <div class="grid-two">
           <div>
+            <h3>Step-by-step</h3>
+            <ul>
+              <li>Router selects top‑k experts per token.</li>
+              <li>AllToAll dispatches tokens to expert owners (ep).</li>
+              <li>Experts run local MLP (optionally tp).</li>
+              <li>AllToAll returns expert outputs.</li>
+              <li>Combine outputs with routing weights.</li>
+            </ul>
+          </div>
+          <div>
+            <h3>Shapes</h3>
+            <ul>
+              <li>Input: [B/dp, S/(cp*sp), D]</li>
+              <li>After routing: token‑expert batches</li>
+              <li>Output: [B/dp, S/(cp*sp), D]</li>
+            </ul>
+          </div>
+        </div>
+        <div class="grid-two">
+          <div>
             <h3>Compute</h3>
             <ul>
               <li>Tokens are routed to experts based on a gating network.</li>
@@ -528,6 +629,26 @@
           Diagram 5: Vocab-parallel softmax uses global max and sum; target
           logits are masked and reduced across shards.
         </p>
+        <div class="grid-two">
+          <div>
+            <h3>Step-by-step</h3>
+            <ul>
+              <li>Compute local logits for vocab shard.</li>
+              <li>AllReduce max for numerical stability.</li>
+              <li>AllReduce sum for softmax denominator.</li>
+              <li>Mask target logit if not local.</li>
+              <li>AllReduce sum to share target logit.</li>
+            </ul>
+          </div>
+          <div>
+            <h3>Shapes</h3>
+            <ul>
+              <li>Logits: [B/dp, S/(cp*sp), V/vp]</li>
+              <li>Targets: [B/dp, S/(cp*sp)]</li>
+              <li>Loss: scalar or per-token</li>
+            </ul>
+          </div>
+        </div>
         <div class="grid-two">
           <div>
             <h3>Compute</h3>
