@@ -16,20 +16,50 @@
         <p class="eyebrow">Distributed Training Notes</p>
         <h1>Visualizing Parallelism in Transformer Compute</h1>
         <p class="subtitle">
-          A compact, diagram-first guide to how modern transformer training
-          splits computation across GPUs. The focus is on local tensor shapes,
-          collective communication, and the flow of data through attention,
-          MLP, MoE, and loss.
+          This page is a map, not a manual. It keeps the tensor shapes visible,
+          names the collectives at each step, and shows how each GPU’s local
+          work is stitched into the global result. The emphasis is on clarity:
+          where the sequence is gathered, where weights are sharded, and how the
+          model returns to its memory‑efficient local form after each block.
         </p>
         <div class="hero-meta">
-          <span>Author: Your Name</span>
+          <span>Author: Harshitha M</span>
           <span>Updated: Feb 2, 2026</span>
         </div>
       </div>
     </header>
 
-    <main class="container">
-      <section class="card">
+    <nav class="top-nav">
+      <div class="container">
+        <a href="#reading-guide">Reading guide</a>
+        <a href="#symbols">Symbols</a>
+        <a href="#embeddings">Embeddings</a>
+        <a href="#attention">Attention</a>
+        <a href="#mlp">MLP</a>
+        <a href="#moe">MoE</a>
+        <a href="#loss">Loss</a>
+      </div>
+    </nav>
+
+    <main class="container layout">
+      <aside class="toc">
+        <div class="toc-card">
+          <h2>Contents</h2>
+          <a href="#reading-guide">How to read</a>
+          <a href="#symbols">Symbols</a>
+          <a href="#local-shape">Local shape</a>
+          <a href="#overview">Overview</a>
+          <a href="#embeddings">Embeddings</a>
+          <a href="#attention">Attention</a>
+          <a href="#mlp">MLP</a>
+          <a href="#moe">MoE</a>
+          <a href="#loss">Loss</a>
+          <a href="#fsdp">FSDP note</a>
+        </div>
+      </aside>
+
+      <div class="content">
+      <section class="card" id="reading-guide">
         <h2>How to Read the Diagrams</h2>
         <p>
           Think from the point of view of a <strong>single GPU</strong>. Each
@@ -43,9 +73,26 @@
           AllReduce, AllToAll), it means the GPU is coordinating with its
           process group to assemble or redistribute a global tensor.
         </p>
+        <div class="reading-list">
+          <div>
+            <h3>Reading cues</h3>
+            <ul>
+              <li>Rectangles: local compute blocks.</li>
+              <li>Arrows: data movement between blocks.</li>
+              <li>Collectives: synchronization boundaries.</li>
+            </ul>
+          </div>
+          <div>
+            <h3>Goal</h3>
+            <ul>
+              <li>Track how a local shard becomes global.</li>
+              <li>Track how global work returns to a shard.</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
-      <section class="grid-two">
+      <section class="grid-two" id="symbols">
         <div class="card">
           <h2>Model Shape Symbols</h2>
           <table>
@@ -142,7 +189,7 @@
         </div>
       </section>
 
-      <section class="card highlight">
+      <section class="card highlight" id="local-shape">
         <h2>The Local Shape You Will See Repeatedly</h2>
         <p>
           A typical block enters and exits with the same local activation shape:
@@ -157,7 +204,7 @@
         </p>
       </section>
 
-      <section class="card">
+      <section class="card" id="overview">
         <h2>Overview of the Transformer Layer</h2>
         <p>
           A standard layer consists of embeddings (global input lookup), an
@@ -166,9 +213,14 @@
           then returns to the memory-efficient local shape via collective
           operations.
         </p>
+        <p class="section-lead">
+          The rest of the page walks through the same rhythm repeatedly:
+          gather what you need, compute locally, then reduce or scatter back to
+          the local shape.
+        </p>
       </section>
 
-      <section class="card">
+      <section class="card" id="embeddings">
         <h2>Embeddings (Vocab Parallel)</h2>
         <div class="diagram">
           <svg viewBox="0 0 900 160" role="img" aria-label="Embedding flow">
@@ -212,6 +264,10 @@
             <text x="750" y="78">Sum + SP shard</text>
           </svg>
         </div>
+        <p class="diagram-caption">
+          Diagram 1: Vocab-parallel embeddings. The local lookup is combined
+          and immediately sharded into the sequence-parallel layout.
+        </p>
         <div class="grid-two">
           <div>
             <h3>Compute</h3>
@@ -233,7 +289,7 @@
         </div>
       </section>
 
-      <section class="card">
+      <section class="card" id="attention">
         <h2>Attention (SP + CP + TP)</h2>
         <div class="diagram">
           <svg viewBox="0 0 900 180" role="img" aria-label="Attention flow">
@@ -289,6 +345,10 @@
             <text x="860" y="78" transform="rotate(90 860 78)">ReduceScatter</text>
           </svg>
         </div>
+        <p class="diagram-caption">
+          Diagram 2: Attention restores sequence context, circulates K/V over
+          the context-parallel ring, then returns to sequence shards.
+        </p>
         <div class="grid-two">
           <div>
             <h3>Compute</h3>
@@ -314,7 +374,7 @@
         </div>
       </section>
 
-      <section class="card">
+      <section class="card" id="mlp">
         <h2>MLP (Dense Feed-Forward)</h2>
         <div class="diagram">
           <svg viewBox="0 0 900 160" role="img" aria-label="MLP flow">
@@ -349,6 +409,10 @@
             <text x="825" y="90">TP row</text>
           </svg>
         </div>
+        <p class="diagram-caption">
+          Diagram 3: The MLP uses tensor-parallel projections, then a
+          ReduceScatter restores the sequence shard.
+        </p>
         <div class="grid-two">
           <div>
             <h3>Compute</h3>
@@ -371,7 +435,7 @@
         </div>
       </section>
 
-      <section class="card">
+      <section class="card" id="moe">
         <h2>Mixture of Experts (MoE)</h2>
         <div class="diagram">
           <svg viewBox="0 0 900 180" role="img" aria-label="MoE flow">
@@ -405,6 +469,10 @@
             <text x="890" y="90" transform="rotate(90 890 90)">AllToAll</text>
           </svg>
         </div>
+        <p class="diagram-caption">
+          Diagram 4: Routing and AllToAll communication dominates MoE. The
+          expert MLP can still use tensor parallelism internally.
+        </p>
         <div class="grid-two">
           <div>
             <h3>Compute</h3>
@@ -424,7 +492,7 @@
         </div>
       </section>
 
-      <section class="card">
+      <section class="card" id="loss">
         <h2>Loss (Vocab Parallel Cross Entropy)</h2>
         <div class="diagram">
           <svg viewBox="0 0 900 180" role="img" aria-label="Loss flow">
@@ -456,6 +524,10 @@
             <text x="695" y="110">AllReduce sum</text>
           </svg>
         </div>
+        <p class="diagram-caption">
+          Diagram 5: Vocab-parallel softmax uses global max and sum; target
+          logits are masked and reduced across shards.
+        </p>
         <div class="grid-two">
           <div>
             <h3>Compute</h3>
@@ -475,7 +547,7 @@
         </div>
       </section>
 
-      <section class="card note">
+      <section class="card note" id="fsdp">
         <h2>Note on FSDP</h2>
         <p>
           Fully Sharded Data Parallel (FSDP) is a memory optimization that
@@ -485,6 +557,7 @@
           often discussed separately from compute-parallel strategies.
         </p>
       </section>
+      </div>
     </main>
 
     <footer class="footer">
