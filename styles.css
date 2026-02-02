@@ -210,25 +210,71 @@ ul {
   margin-bottom: 12px;
 }
 
+/* Diagram Styling Updates */
 .diagram svg {
-  width: 100%;
-  height: auto;
+  font-family: "Inter", "Segoe UI", sans-serif;
+  max-width: 600px; /* Constrain width for vertical flow */
+  margin: 0 auto;
+  display: block;
 }
 
-svg rect {
-  fill: #ffffff;
-  stroke: #1c2b4a;
-  stroke-width: 1.6;
+/* Box Styles */
+.box-meta {
+  fill: #e3f2fd;
+  stroke: #64b5f6;
+  stroke-width: 2px;
+  rx: 8px;
 }
 
-svg text {
-  font-family: "Inter", "Segoe UI", Arial, sans-serif;
-  font-size: 13.5px;
-  font-weight: 500;
+.box-compute {
+  fill: #fff9c4;
+  stroke: #fbc02d;
+  stroke-width: 2px;
+  rx: 8px;
+}
+
+.box-collective {
+  fill: #dcedc8;
+  stroke: #7cb342;
+  stroke-width: 2px;
+  rx: 8px;
+}
+
+/* Text Styles */
+.text-label {
+  font-size: 14px;
+  font-weight: 600;
   fill: #1c2b4a;
   text-anchor: middle;
   dominant-baseline: middle;
 }
+
+.text-sub {
+  font-size: 11px;
+  fill: #546e7a;
+  text-anchor: middle;
+  dominant-baseline: middle;
+}
+
+.text-shape {
+  font-size: 12px;
+  font-family: "Menlo", monospace;
+  fill: #455a64;
+  text-anchor: middle;
+  background-color: #ffffff; /* For clear reading over lines */
+}
+
+/* Arrow Styles */
+.arrow-line {
+  stroke: #455a64;
+  stroke-width: 1.5;
+  fill: none;
+}
+
+.arrow-head {
+  fill: #455a64;
+}
+
 
 .diagram-caption {
   font-size: 0.92rem;
